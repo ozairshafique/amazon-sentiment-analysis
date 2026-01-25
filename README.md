@@ -48,11 +48,14 @@ Additional metrics such as precision and recall were used to ensure robust evalu
 
 ## Project Structure
 
+```text
 amazon-sentiment-analysis/
 ├── data/
 │ └── amazon_reviews.csv
 └── notebooks/
 └── amazon_sentiment_analysis.ipynb
+
+```
 
 ## Notebook
 
