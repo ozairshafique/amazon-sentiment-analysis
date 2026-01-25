@@ -17,12 +17,16 @@ Use the package manager [pip](https://pip.pypa.io/en/stable/) to install require
 
 ```bash
 pip install -r requirements.txt
+```
 
 ## Dataset
+
 The dataset consists of Amazon customer reviews with associated sentiment labels.
 
 ## Approach
+
 The project follows a standard machine learning pipeline:
+
 - Data loading and basic exploration
 - Text preprocessing (cleaning, normalization)
 - Feature extraction using **TF-IDF**
@@ -38,22 +42,25 @@ The project follows a standard machine learning pipeline:
   - ROC-AUC
 
 ## Results
+
 The trained models achieved strong performance on the sentiment classification task, with accuracy up to **93%** and a **ROC-AUC score of 0.96**.
 Additional metrics such as precision and recall were used to ensure robust evaluation.
 
 ## Project Structure
+
 amazon-sentiment-analysis/
 ├── data/
 │ └── amazon_reviews.csv
 └── notebooks/
 └── amazon_sentiment_analysis.ipynb
 
-
 ## Notebook
+
 The full analysis and implementation can be found here:
 📓 `notebooks/amazon_sentiment_analysis.ipynb`
 
 ## Technologies Used
+
 - Python
 - Pandas
 - NumPy
@@ -63,12 +70,17 @@ The full analysis and implementation can be found here:
 - Seaborn
 
 ## Key Learnings
+
 - Importance of proper text preprocessing in NLP tasks
 - Trade-offs between different classical ML models
 - Why evaluation metrics beyond accuracy are critical for reliable model assessment
 
 ## Future Improvements
+
 - Compare classical models with Transformer-based approaches (e.g., BERT)
 - Hyperparameter tuning
 - Model deployment using an API
+
+```
+
 ```
