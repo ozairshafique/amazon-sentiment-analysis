@@ -43,7 +43,7 @@ The project follows a standard machine learning pipeline:
 
 ## Results
 
-The trained models achieved strong performance on the sentiment classification task, with accuracy up to **93%** and a **ROC-AUC score of 0.96**.
+The trained models achieved strong performance on the sentiment classification task, with accuracy up to **96%** and a **ROC-AUC score of 0.96**.
 Additional metrics such as precision and recall were used to ensure robust evaluation.
 
 ## Project Structure
@@ -51,9 +51,11 @@ Additional metrics such as precision and recall were used to ensure robust evalu
 ```text
 amazon-sentiment-analysis/
 ├── data/
-│ └── amazon_reviews.csv
-└── notebooks/
-└── amazon_sentiment_analysis.ipynb
+│   └── amazon_reviews.csv
+├── notebooks/
+│   └── amazon_sentiment_analysis.ipynb
+├── requirements.txt
+└── README.md
 
 ```
 
