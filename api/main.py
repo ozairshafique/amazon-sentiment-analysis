@@ -19,7 +19,7 @@ from fastapi import FastAPI, HTTPException ,Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
-from src.model_loader import MODELS, _load, predict
+from src.model_loader import AVAILABLE_MODELS, _load, predict
 import logging
 import time
 from .schemas import (
@@ -46,7 +46,7 @@ API_VERSION = "1.0.1"
 async def lifespan(app: FastAPI):
     log.info("Starting up Loading models...")
     try:
-        for name in MODELS:
+        for name in AVAILABLE_MODELS:
             _load(name)
             log.info(f"Model '{name}' loaded successfully.")
     except FileNotFoundError as e:
@@ -93,9 +93,9 @@ def root():
         "message": "Welcome to the Amazon Sentiment Analysis API!",
         "name": "Amazon Sentiment Analysis API",
         "version": API_VERSION,
-        "models": list(MODELS),
+        "models": list(AVAILABLE_MODELS),
         "endpoints": {
-            "single": " POST /predict",
+            "single": "POST /predict",
             "docs": "GET /docs",
             "health": "GET /health",
             "batch": " POST /batch/predict"
@@ -112,7 +112,7 @@ def health():
         "status": "ok",
         "message": "API is healthy and running.",
         "version": API_VERSION,
-        "models": list(MODELS)
+        "models": list(AVAILABLE_MODELS)
     }
 
 
