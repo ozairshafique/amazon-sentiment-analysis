@@ -4,11 +4,11 @@ class ReviewRequest(BaseModel):
     text: str = Field(...,min_length=3,
                        max_length=5000,
                        description="Raw review text to analyze. Validations will be done in preprocessing step.",
-                       example="This product is amazing! I loved it.")
+                       json_schema_extra="example: 'This product is absolutely amazing — best purchase I've made.'")
 
     model_name: str = Field(default="logreg",
                        description="Model to use for prediction. Currently only 'logreg' is available.",
-                       example="logreg")
+                       json_schema_extra="example: 'logreg'")
 
     @field_validator("text")
     @classmethod
