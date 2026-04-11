@@ -27,6 +27,7 @@ class ReviewRequest(BaseModel):
         return t
 
     model_config = {
+        "protected_namespaces": (),
         "json_schema_extra":{
             "examples":[
                 {
