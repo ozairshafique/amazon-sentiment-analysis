@@ -10,6 +10,7 @@ scikit-learn==1.7.0
 numpy==1.26.4
 pandas==2.2.2
 joblib==1.4.2
+mlflow==3.11.1
 
 # NLP
 nltk==3.8.1
