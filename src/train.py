@@ -132,7 +132,7 @@ def train() -> None:
     for name, pipeline in pipelines.items():
 
         if mlflow.active_run():
-            mlflow.end_run()
+            mlflow.end_run() # End previous run to avoid nested runs in next iteration
 
         # Start a new MLflow run for this model
         with mlflow.start_run(run_name=name):
@@ -177,6 +177,15 @@ def train() -> None:
             target_names=["Negative", "Positive"],
         ))
 
+        # Log test metrics to MLflow
+        report = classification_report(
+            y_test, preds,
+            target_names=["Negative", "Positive"],
+            output_dict=True
+        )
+        mlflow.log_metric("test_f1_macro", round(report["macro avg"]["f1-score"], 4), step=0)
+        mlflow.log_metric("test_f1_positive", round(report["Positive"]["f1-score"], 4), step=0)
+        mlflow.log_metric("test_f1_negative", round(report["Negative"]["f1-score"], 4), step=0)
         # Retrain best pipeline on FULL dataset before saving
         # (more data = better generalisation for production)
         print(f"  Retraining {name} on full dataset...")
