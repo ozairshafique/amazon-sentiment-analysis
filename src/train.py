@@ -28,6 +28,8 @@ from sklearn.metrics import classification_report
 from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
+import mlflow
+import mlflow.sklearn
 
 from src.preprocessing import TextPreprocessor
 
@@ -126,7 +128,23 @@ def train() -> None:
     MODEL_DIR.mkdir(exist_ok=True)
     pipelines = build_pipelines()
 
+    mlflow.set_experiment("sentiment analysis")
     for name, pipeline in pipelines.items():
+        with mlflow.start_run(run_name=name):
+
+            mlflow.log_params({
+                "model": name,
+                "test_size": TEST_SIZE,
+                "random_seed": RANDOM_SEED,
+                "tfidf_max_features": TFIDF_PARAMS["max_features"],
+                "tfidf_ngram_range": TFIDF_PARAMS["ngram_range"],
+                "tfididf_min_df": TFIDF_PARAMS["min_df"],
+                "tfidif_max_df": TFIDF_PARAMS["max_df"],
+                "tfidf_sublinear_tf": TFIDF_PARAMS["sublinear_tf"],
+                "cv_folds": 3,
+                "cv_scoring": "f1_macro"
+                })
+
         print(f"── Training {name} {'─' * (30 - len(name))}")
 
         # Grid search with 3-fold CV on training split
@@ -140,6 +158,8 @@ def train() -> None:
         )
         grid.fit(X_train, y_train)
         best = grid.best_estimator_
+
+        mlflow.log_param("best_C",grid.best_params_["clf__C"])
 
         print(f"  Best params : {grid.best_params_}")
         print(f"  Best CV F1  : {grid.best_score_:.4f}")
@@ -155,6 +175,8 @@ def train() -> None:
         # (more data = better generalisation for production)
         print(f"  Retraining {name} on full dataset...")
         best.fit(X, y)
+
+#        mlflow.sklearn(log_model=best, artifact_path=f"{name}_model")
 
         out_path = MODEL_DIR / f"{name}_model.pkl"
         joblib.dump(best, out_path)
