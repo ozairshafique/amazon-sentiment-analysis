@@ -128,8 +128,13 @@ def train() -> None:
     MODEL_DIR.mkdir(exist_ok=True)
     pipelines = build_pipelines()
 
-    mlflow.set_experiment("sentiment analysis")
+    mlflow.set_experiment("amazon sentiment analysis")
     for name, pipeline in pipelines.items():
+
+        if mlflow.active_run():
+            mlflow.end_run()
+
+        # Start a new MLflow run for this model
         with mlflow.start_run(run_name=name):
 
             mlflow.log_params({
@@ -137,29 +142,30 @@ def train() -> None:
                 "test_size": TEST_SIZE,
                 "random_seed": RANDOM_SEED,
                 "tfidf_max_features": TFIDF_PARAMS["max_features"],
-                "tfidf_ngram_range": TFIDF_PARAMS["ngram_range"],
-                "tfididf_min_df": TFIDF_PARAMS["min_df"],
-                "tfidif_max_df": TFIDF_PARAMS["max_df"],
+                "tfidf_ngram_range": str(TFIDF_PARAMS["ngram_range"]),
+                "tfidf_min_df": TFIDF_PARAMS["min_df"],
+                "tfidf_max_df": TFIDF_PARAMS["max_df"],
                 "tfidf_sublinear_tf": TFIDF_PARAMS["sublinear_tf"],
                 "cv_folds": 3,
                 "cv_scoring": "f1_macro"
                 })
 
-        print(f"── Training {name} {'─' * (30 - len(name))}")
+            print(f"── Training {name} {'─' * (30 - len(name))}")
 
-        # Grid search with 3-fold CV on training split
-        grid = GridSearchCV(
-            pipeline,
-            param_grid=PARAM_GRIDS[name],
-            cv=3,
-            scoring="f1_macro",   # best metric for imbalanced data
-            n_jobs=-1,
-            verbose=0,
-        )
-        grid.fit(X_train, y_train)
-        best = grid.best_estimator_
+            # Grid search with 3-fold CV on training split
+            grid = GridSearchCV(
+                pipeline,
+                param_grid=PARAM_GRIDS[name],
+                cv=3,
+                scoring="f1_macro",   # best metric for imbalanced data
+                n_jobs=-1,
+                verbose=0,
+            )
+            grid.fit(X_train, y_train)
+            best = grid.best_estimator_
 
         mlflow.log_param("best_C",grid.best_params_["clf__C"])
+        mlflow.log_metric("best_cv_f1", round(grid.best_score_,4), step=0)
 
         print(f"  Best params : {grid.best_params_}")
         print(f"  Best CV F1  : {grid.best_score_:.4f}")
