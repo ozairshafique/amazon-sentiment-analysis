@@ -24,7 +24,7 @@ import joblib
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report, roc_auc_score
 from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
@@ -164,34 +164,78 @@ def train() -> None:
             grid.fit(X_train, y_train)
             best = grid.best_estimator_
 
-        mlflow.log_param("best_C",grid.best_params_["clf__C"])
-        mlflow.log_metric("best_cv_f1", round(grid.best_score_,4), step=0)
 
-        print(f"  Best params : {grid.best_params_}")
-        print(f"  Best CV F1  : {grid.best_score_:.4f}")
+            mlflow.log_param("best_C",grid.best_params_["clf__C"])
+            mlflow.log_metric("best_cv_f1", round(grid.best_score_,4), step=0)
 
-        # Evaluate on held-out test set
-        preds = best.predict(X_test)
-        print(classification_report(
-            y_test, preds,
-            target_names=["Negative", "Positive"],
-        ))
+            print(f"  Best params : {grid.best_params_}")
+            print(f"  Best CV F1  : {grid.best_score_:.4f}")
 
-        # Log test metrics to MLflow
-        report = classification_report(
-            y_test, preds,
-            target_names=["Negative", "Positive"],
-            output_dict=True
-        )
-        mlflow.log_metric("test_f1_macro", round(report["macro avg"]["f1-score"], 4), step=0)
-        mlflow.log_metric("test_f1_positive", round(report["Positive"]["f1-score"], 4), step=0)
-        mlflow.log_metric("test_f1_negative", round(report["Negative"]["f1-score"], 4), step=0)
-        # Retrain best pipeline on FULL dataset before saving
-        # (more data = better generalisation for production)
-        print(f"  Retraining {name} on full dataset...")
-        best.fit(X, y)
+            # Evaluate on held-out test set
+            preds = best.predict(X_test)
+            print(classification_report(
+                y_test, preds,
+                target_names=["Negative", "Positive"],
+            ))
 
-#        mlflow.sklearn(log_model=best, artifact_path=f"{name}_model")
+            # Log test metrics to MLflow
+            report = classification_report(
+                y_test, preds,
+                target_names=["Negative", "Positive"],
+                output_dict=True
+            )
+
+            if name == "logreg":
+                scores = best.predict_proba(X_test)[:, 1]
+            else:
+                scores = best.decision_function(X_test)
+
+            roc_score = roc_auc_score(y_test, scores)
+            mlflow.log_metric("test_f1_macro", round(report["macro avg"]["f1-score"], 4), step=0)
+            mlflow.log_metric("test_f1_positive", round(report["Positive"]["f1-score"], 4), step=0)
+            mlflow.log_metric("test_f1_negative", round(report["Negative"]["f1-score"], 4), step=0)
+            mlflow.log_metric("test_roc_auc", round(roc_score, 4), step=0)
+
+            mlflow.sklearn.log_model(best, artifact_path=f"{name}_model")
+            # Retrain best pipeline on FULL dataset before saving
+            # (more data = better generalisation for production)
+            print(f"  Retraining {name} on full dataset...")
+            best.fit(X, y)
+
+
+            mlflow.sklearn.log_model(
+                best,
+                artifact_path="model",
+                registered_model_name="amazon-sentiment-logreg"
+            )
+
+            client = mlflow.tracking.MlflowClient()
+
+            client.update_registered_model(
+                name="amazon-sentiment-logreg",
+                description="TF-IDF + Logistic Regression pipeline for Amazon review sentiment classification. Trained on 4,772 reviews with 13.7:1 class imbalance"
+            )
+
+            client.set_model_version_tag(
+                name="amazon-sentiment-logreg",
+                version=1,
+                key="dataset",
+                value="Initial version trained on 4,772 reviews"
+            )
+
+            client.set_model_version_tag(
+                name="amazon-sentiment-logreg",
+                version=1,
+                key="cv_f1",
+                value=f"round(grid.best_score_, 4)"
+            )
+
+            client.transition_model_version_stage(
+                name="amazon-sentiment-logreg",
+                version=1,
+                stage="Production",
+                archive_existing_versions=True # Archive any existing production versions when transitioning a new version to production
+            )
 
         out_path = MODEL_DIR / f"{name}_model.pkl"
         joblib.dump(best, out_path)
