@@ -202,40 +202,40 @@ def train() -> None:
             print(f"  Retraining {name} on full dataset...")
             best.fit(X, y)
 
+            if name == "logreg":
+                mlflow.sklearn.log_model(
+                    best,
+                    artifact_path="model",
+                    registered_model_name="amazon-sentiment-logreg")
 
-            mlflow.sklearn.log_model(
-                best,
-                artifact_path="model",
-                registered_model_name="amazon-sentiment-logreg"
-            )
+                client = mlflow.tracking.MlflowClient()
 
-            client = mlflow.tracking.MlflowClient()
+                client.update_registered_model(
+                    name="amazon-sentiment-logreg",
+                    description="TF-IDF + Logistic Regression pipeline for Amazon review sentiment classification. Trained on 4,772 reviews with 13.7:1 class imbalance"
+                )
 
-            client.update_registered_model(
-                name="amazon-sentiment-logreg",
-                description="TF-IDF + Logistic Regression pipeline for Amazon review sentiment classification. Trained on 4,772 reviews with 13.7:1 class imbalance"
-            )
+                lastest_versions = client.get_latest_versions(name="amazon-sentiment-logreg")[-1].version
+                client.set_model_version_tag(
+                    name="amazon-sentiment-logreg",
+                    version=lastest_versions,
+                    key="dataset",
+                    value="Initial version trained on 4,772 reviews"
+                )
 
-            client.set_model_version_tag(
-                name="amazon-sentiment-logreg",
-                version=1,
-                key="dataset",
-                value="Initial version trained on 4,772 reviews"
-            )
+                client.set_model_version_tag(
+                    name="amazon-sentiment-logreg",
+                    version=lastest_versions,
+                    key="cv_f1",
+                    value=f"{round(grid.best_score_, 4)}"
+                )
 
-            client.set_model_version_tag(
-                name="amazon-sentiment-logreg",
-                version=1,
-                key="cv_f1",
-                value=f"round(grid.best_score_, 4)"
-            )
-
-            client.transition_model_version_stage(
-                name="amazon-sentiment-logreg",
-                version=1,
-                stage="Production",
-                archive_existing_versions=True # Archive any existing production versions when transitioning a new version to production
-            )
+                client.transition_model_version_stage(
+                    name="amazon-sentiment-logreg",
+                    version=lastest_versions,
+                    stage="Production",
+                    archive_existing_versions=True # Archive any existing production versions when transitioning a new version to production
+                    )
 
         out_path = MODEL_DIR / f"{name}_model.pkl"
         joblib.dump(best, out_path)
