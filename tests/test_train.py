@@ -2,6 +2,7 @@ from src.train import load_data, build_pipelines
 import src.train as train_module
 import pytest
 import pandas as pd
+from unittest.mock import patch, MagicMock
 
 def test_build_piplines():
     piplines = build_pipelines()
@@ -47,8 +48,10 @@ def test_load_data_invalid_sentiment(tmp_path):
     X, y = load_data(file_path)
     assert len(X) == 3  # One neutral row should be dropped
     assert set(y.unique()).issubset({0, 1})
+    assert 1 in y.values
+    assert 0 in y.values
 
-def test_test_train_end_to_end(tmp_path, monkeypatch):
+def test_train_end_to_end(tmp_path, monkeypatch):
     df = pd.DataFrame({
         'reviewText' : ["Great product!", "Terrible experience.", "Okay, not bad.", "Loved it!", "Worst ever!", "Average product."],
         'overall': [5, 4, 4, 5, 2, 2]
@@ -59,6 +62,19 @@ def test_test_train_end_to_end(tmp_path, monkeypatch):
     monkeypatch.setattr(train_module, "DATA_PATH", file_path)
     monkeypatch.setattr(train_module, "MODEL_DIR", tmp_path)
 
-    train_module.train()
+    with patch("mlflow.sklearn.log_model"), \
+        patch("mlflow.start_run"), \
+        patch("mlflow.log_metric"), \
+        patch("mlflow.log_param"), \
+        patch("mlflow.log_params"), \
+        patch("mlflow.log_artifacts"), \
+        patch("mlflow.set_experiment"), \
+        patch("mlflow.register_model"), \
+        patch("mlflow.active_run"), \
+        patch("mlflow.tracking.MlflowClient") as mock_client:
+
+        mock_client.return_value.get_latest_versions.return_value = [MagicMock(version=1)]
+
+        train_module.train()
     assert(tmp_path/"logreg_model.pkl").exists()
     assert(tmp_path/"linear_svc_model.pkl").exists()
