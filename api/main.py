@@ -17,6 +17,8 @@ Intractive API docs available at:
 
 from fastapi import FastAPI, HTTPException ,Request, status
 from fastapi.middleware.cors import CORSMiddleware
+from prometheus_fastapi_instrumentator import Instrumentator
+from prometheus_client import Counter, Histogram, Gauge
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 from src.model_loader import AVAILABLE_MODELS, _load, predict
@@ -64,6 +66,18 @@ app = FastAPI(
     description="Predict sentiment of Amazon reviews using pre-trained models.",
     lifespan=lifespan
 )
+
+# Prometheus metrics
+PREDICTION_COUNTER = Counter("sentiment_predictions_total", "Total Predictions", ["sentiment", "model"])
+
+# Histogram to track prediction latency
+PREDICTION_LATENCY = Histogram("sentiment_prediction_latency_seconds","time taken for sentiment prediction")
+
+# Gauge to track model loading status
+MODEL_CONFIDENCE = Gauge("sentiment_model_confidence", "Latest confidence score for each model")
+
+# Instrumentator to expose metrics at /metrics endpoint
+Instrumentator().instrument(app).expose(app)
 
 # Allow CORS from any origin (for testing; restrict in production)
 app.add_middleware(
@@ -126,6 +140,7 @@ def predict_single(request: ReviewRequest):
 
       Returns sentiment (`positive` / `negative`) and a confidence score. '''
 
+    start_time = time.perf_counter()
     try:
 
         result = predict(request.text, request.model_name)
@@ -138,6 +153,10 @@ def predict_single(request: ReviewRequest):
         log.error(f"Unexpected error during prediction: {e}")
         raise HTTPException(status_code=500, detail="Internal server error.")
 
+    latency = time.perf_counter() - start_time
+    PREDICTION_COUNTER.labels(sentiment=result['sentiment'], model=result['model']).inc()
+    PREDICTION_LATENCY.observe(latency)
+    MODEL_CONFIDENCE.set(result['confidence'])
     return PredictionResponse(
         text= request.text,
         model= result['model'],
