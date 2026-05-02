@@ -6,7 +6,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./model: /app/model
+      - ./model:/app/model
     restart: always
     environment:
       - PYTHONUNBUFFERED=1
