@@ -40,3 +40,7 @@ Thumbs.db
 
 # Environment variables
 .env
+
+# Ignore Prometheus and Grafana data directories
+prometheus_data/
+grafana_data
