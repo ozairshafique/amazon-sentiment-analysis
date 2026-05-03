@@ -1,208 +1,265 @@
-# 🛍️ Amazon Sentiment Analysis API
+# 🛍️ Amazon Sentiment Analysis — MLOps Pipeline
 
-End-to-end MLOps pipeline — from raw data to a production-ready REST API with MLflow experiment tracking, CI/CD, and Docker containerization. Achieves CV F1 0.858 · ROC-AUC 0.967.
+> End-to-end MLOps system: from raw Amazon reviews to a **live, monitored, production REST API** deployed on AWS.
 
-![Python](https://img.shields.io/badge/Python-3.12-blue)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.115.0-green)
-![MLflow](https://img.shields.io/badge/MLflow-3.1.1-orange)
-![Docker](https://img.shields.io/badge/Docker-ready-blue)
-![CI](https://github.com/ozairshafique/amazon-sentiment-analysis/actions/workflows/ci.yml/badge.svg)
-![Coverage](https://img.shields.io/badge/coverage-98%25-brightgreen)
-![Tests](https://img.shields.io/badge/tests-20%2B%20passed-brightgreen)
+[![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=flat&logo=python&logoColor=white)](https://python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115.0-009688?style=flat&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![MLflow](https://img.shields.io/badge/MLflow-3.1.1-0194E2?style=flat&logo=mlflow&logoColor=white)](https://mlflow.org)
+[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat&logo=docker&logoColor=white)](https://docker.com)
+[![AWS](https://img.shields.io/badge/AWS-EC2%20%7C%20S3%20%7C%20CloudWatch-FF9900?style=flat&logo=amazonaws&logoColor=white)](https://aws.amazon.com)
+[![Prometheus](https://img.shields.io/badge/Prometheus-2.51-E6522C?style=flat&logo=prometheus&logoColor=white)](https://prometheus.io)
+[![Grafana](https://img.shields.io/badge/Grafana-11.0-F46800?style=flat&logo=grafana&logoColor=white)](https://grafana.com)
+[![CI](https://github.com/ozairshafique/amazon-sentiment-analysis/actions/workflows/ci.yml/badge.svg)](https://github.com/ozairshafique/amazon-sentiment-analysis/actions)
+[![Coverage](https://img.shields.io/badge/Coverage-98%25-brightgreen?style=flat)](https://github.com/ozairshafique/amazon-sentiment-analysis)
+[![Tests](https://img.shields.io/badge/Tests-20%2B%20Passed-brightgreen?style=flat)](https://github.com/ozairshafique/amazon-sentiment-analysis)
 
-## Table of Contents
+---
 
+## 📋 Table of Contents
+
+- [Live Demo](#-live-demo)
 - [Overview](#-overview)
 - [Problem Statement](#-problem-statement)
 - [Dataset](#-dataset)
-- [Approach](#-approach)
-- [Results](#-results)
+- [Architecture](#-architecture)
+- [Model Results](#-model-results)
 - [MLflow Experiment Tracking](#-mlflow-experiment-tracking)
-- [Visualizations](#-visualizations)
-- [Tech Stack](#-tech-stack)
+- [Grafana Monitoring Dashboard](#-grafana-monitoring-dashboard)
+- [Prometheus Targets](#-prometheus-targets)
+- [CloudWatch Monitoring](#-cloudwatch-monitoring)
+- [FastAPI Documentation](#-fastapi-documentation)
+- [ML Visualizations](#-ml-visualizations)
+- [Tech Stack](#️-tech-stack)
 - [Project Structure](#-project-structure)
-- [How to Run](#-how-to-run)
+- [Environment Variables](#-environment-variables)
+- [How to Run](#️-how-to-run)
 - [API Endpoints](#-api-endpoints)
 - [Testing](#-testing)
-- [CI/CD Pipeline](#-cicd-pipeline)
+- [CI/CD Pipeline](#️-cicd-pipeline)
 - [Reproducibility](#-reproducibility)
+- [Troubleshooting](#-troubleshooting)
 - [Key Learnings](#-key-learnings)
 - [Future Improvements](#-future-improvements)
+- [Known Limitations](#️-known-limitations)
+- [Contributing](#-contributing)
+- [License](#-license)
 - [Conclusion](#-conclusion)
 - [Author](#-author)
 
 ---
 
+## 🔗 Live Demo
+
+| Service       | URL                                                              | Status                                                      |
+| ------------- | ---------------------------------------------------------------- | ----------------------------------------------------------- |
+| 🚀 FastAPI    | [http://63.180.13.157:8000/docs](http://63.180.13.157:8000/docs) | ![UP](https://img.shields.io/badge/status-live-brightgreen) |
+| 📊 Grafana    | [http://63.180.13.157:3001](http://63.180.13.157:3001)           | ![UP](https://img.shields.io/badge/status-live-brightgreen) |
+| 📈 Prometheus | [http://63.180.13.157:9090](http://63.180.13.157:9090)           | ![UP](https://img.shields.io/badge/status-live-brightgreen) |
+
+---
+
 ## 📌 Overview
 
-This project demonstrates a complete machine learning lifecycle:
+This project showcases a **production-grade MLOps pipeline** built entirely from scratch:
 
-- Data exploration and model comparison in Jupyter
-- Clean training pipeline with GridSearchCV
-- **MLflow experiment tracking** — parameters, metrics, and artifacts logged per run
-- Production REST API built with FastAPI
-- Containerized with Docker
-- Automated CI/CD with GitHub Actions
-- 20+ pytest tests with **98% coverage**
+- 🔬 **ML Training** — GridSearchCV + MLflow experiment tracking
+- 🚀 **REST API** — FastAPI with single & batch prediction endpoints
+- 🐳 **Containerization** — Docker Compose orchestrating 3 services
+- ☁️ **Cloud Deployment** — AWS EC2 with S3 model storage
+- 📡 **Real-time Monitoring** — Prometheus + Grafana (8 panels)
+- 🔍 **Infrastructure Monitoring** — AWS CloudWatch
+- ✅ **Quality Assurance** — 98% test coverage + CI/CD pipeline
+
+---
+
+## 🏗️ Architecture
+
+> Full system architecture showing AWS infrastructure, Docker Compose services, and component interactions.
+
+![System Architecture](images/diagrams.png)
+
+### 🔄 Data Flow
+
+> Complete ML pipeline from raw data to production deployment with monitoring.
+
+![Data Flow](images/dataflows.png)
 
 ---
 
 ## 🎯 Problem Statement
 
-Online reviews contain valuable information about customer opinions, but analyzing them manually is not scalable.
-
-The objective is to build a machine learning model that automatically classifies Amazon product reviews as **positive** or **negative** sentiment.
+Amazon product reviews contain rich customer sentiment but are impossible to analyze at scale manually. This system automatically classifies reviews as **positive** or **negative** with **86%+ model confidence**, tracked in real time.
 
 ---
 
 ## 📂 Dataset
 
-The dataset consists of Amazon customer reviews with associated star ratings used to derive sentiment labels.
+| Stars            | Label    | Encoded |
+| ---------------- | -------- | ------- |
+| ⭐⭐⭐⭐⭐ (4–5) | Positive | 1       |
+| ⭐ (1–2)         | Negative | 0       |
+| ⭐⭐⭐ (3)       | Neutral  | Dropped |
 
-| Stars                | Label    | Encoded |
-| -------------------- | -------- | ------- |
-| ⭐⭐⭐⭐⭐ 4–5 stars | Positive | 1       |
-| ⭐ 1–2 stars         | Negative | 0       |
-| ⭐⭐⭐ 3 stars       | Neutral  | Dropped |
+| Split        | Positive    | Negative | Imbalance  |
+| ------------ | ----------- | -------- | ---------- |
+| Full dataset | 4,448 (93%) | 324 (7%) | **13.7:1** |
 
-| Sentiment           | Count      | Ratio |
-| ------------------- | ---------- | ----- |
-| Positive            | 4,448      | 93%   |
-| Negative            | 324        | 7%    |
-| **Imbalance ratio** | **13.7:1** |       |
-
-> Download the dataset from Kaggle and place it as `data/amazon_reviews.csv`
-> 🔗 [Amazon Product Reviews – Kaggle](https://www.kaggle.com/datasets/halimedogan/amazon-reviews)
+> 🔗 [Amazon Product Reviews — Kaggle](https://www.kaggle.com/datasets/halimedogan/amazon-reviews)
+> Place dataset at `data/amazon_reviews.csv`
 
 ---
 
-## 🚀 Approach
+## 📊 Model Results
 
-![Workflow](images/workflows.png)
+### Performance Comparison
 
----
-
-## 📊 Results
-
-### Model Comparison
-
-| Metric             | Logistic Regression |             LinearSVC |         SVC |    Random Forest |
-| ------------------ | ------------------: | --------------------: | ----------: | ---------------: |
-| Best C             |                  10 |                   0.1 |           — |                — |
-| CV Macro F1        |           **0.858** |                 0.850 |       0.840 |            0.512 |
-| Test F1 (Macro)    |           **0.852** |                 0.835 |           — |                — |
-| Test F1 (Positive) |           **0.980** |                 0.975 |           — |                — |
-| Test F1 (Negative) |           **0.724** |                 0.694 |           — |                — |
-| ROC-AUC            |               0.967 |             **0.968** |       0.968 |            0.961 |
-| Production         |     ✅ **Selected** | ❌ No `predict_proba` | ❌ Too slow | ❌ Baseline only |
+| Metric           | Logistic Regression | LinearSVC |   SVC | Random Forest |
+| ---------------- | ------------------: | --------: | ----: | ------------: |
+| CV Macro F1      |           **0.858** |     0.850 | 0.840 |         0.512 |
+| Test F1 Macro    |           **0.852** |     0.835 |     — |             — |
+| Test F1 Positive |           **0.980** |     0.975 |     — |             — |
+| Test F1 Negative |           **0.724** |     0.694 |     — |             — |
+| ROC-AUC          |               0.967 | **0.968** | 0.968 |         0.961 |
+| Selected         |          ✅ **Yes** |        ❌ |    ❌ |            ❌ |
 
 ### Why Logistic Regression?
 
-| Criterion        | LogReg    | LinearSVC         | SVC        | Random Forest |
-| ---------------- | --------- | ----------------- | ---------- | ------------- |
-| CV Macro F1      | ✅ Best   | ✅ Similar        | ✅ Similar | ❌ Lowest     |
-| predict_proba()  | ✅ Native | ❌ Wrapper needed | ⚠️ Slow    | ✅ Native     |
-| Inference speed  | ✅ Fast   | ✅ Fast           | ⚠️ Slow    | ❌ Slow       |
-| Production ready | ✅        | ❌                | ❌         | ❌            |
+| Criterion         | LogReg    | LinearSVC  | SVC        | Random Forest |
+| ----------------- | --------- | ---------- | ---------- | ------------- |
+| Best CV F1        | ✅        | ✅ Similar | ✅ Similar | ❌            |
+| `predict_proba()` | ✅ Native | ❌ Wrapper | ⚠️ Slow    | ✅            |
+| Inference Speed   | ✅ Fast   | ✅ Fast    | ❌ Slow    | ❌ Slow       |
+| Production Ready  | ✅        | ❌         | ❌         | ❌            |
 
-> ⚠️ Accuracy alone is misleading with 13.7:1 class imbalance.
-> **F1 macro** is used as the primary evaluation metric.
+> ⚠️ **Note:** Accuracy is misleading with 13.7:1 class imbalance. **F1 Macro** is the primary metric.
 
 ---
 
 ## 🔬 MLflow Experiment Tracking
 
-All training runs are tracked with **MLflow 3.1.1**, enabling full reproducibility and side-by-side run comparison.
+All runs tracked with **MLflow 3.1.1** for full reproducibility.
 
-![MLflow Run Comparison](images/model_comparisons.jpeg)
+![MLflow Comparison](images/model_comparisons.jpeg)
 
-### What is logged per run
+### Logged Per Run
 
-**Parameters**
-
-| Parameter                       | Description                                    |
-| ------------------------------- | ---------------------------------------------- |
-| `model`                         | Algorithm name (`logreg`, `linear_svc`, etc.)  |
-| `best_C`                        | Best regularization strength from GridSearchCV |
-| `cv_folds`                      | Number of cross-validation folds (3)           |
-| `cv_scoring`                    | Scoring metric used (`f1_macro`)               |
-| `tfidf_max_features`            | Maximum TF-IDF vocabulary size (20,000)        |
-| `tfidf_ngram_range`             | N-gram range `(1, 3)`                          |
-| `tfidf_sublinear_tf`            | Log-frequency scaling (`True`)                 |
-| `tfidf_max_df` / `tfidf_min_df` | Document frequency bounds                      |
-| `test_size`                     | Train/test split ratio (0.2)                   |
-| `random_seed`                   | Global random seed (42)                        |
-
-**Metrics**
-
-| Metric             | Logistic Regression | LinearSVC |
-| ------------------ | ------------------: | --------: |
-| `best_cv_f1`       |           **0.858** |     0.850 |
-| `test_f1_macro`    |           **0.852** |     0.835 |
-| `test_f1_negative` |           **0.724** |     0.694 |
-| `test_f1_positive` |           **0.980** |     0.975 |
-| `test_roc_auc`     |               0.967 | **0.968** |
-
-**Artifacts:** confusion matrix, classification report, trained model (`.pkl`)
-
-### Launch the MLflow UI
+| Category       | Details                                               |
+| -------------- | ----------------------------------------------------- |
+| **Parameters** | model, best_C, cv_folds, tfidf settings, random_seed  |
+| **Metrics**    | cv_f1, test_f1_macro, test_f1_negative, roc_auc       |
+| **Artifacts**  | confusion matrix, classification report, `.pkl` model |
 
 ```bash
-mlflow ui
-# http://localhost:5000
+# View all experiments
+mlflow ui  # → http://localhost:5000
+```
+
+### Model Registry
+
+![Model Registry](images/model-regesterd.jpeg)
+
+| Model                   | Version | Stage         | CV F1 |
+| ----------------------- | ------- | ------------- | ----- |
+| amazon-sentiment-logreg | 2       | ✅ Production | 0.858 |
+| amazon-sentiment-logreg | 1       | 📦 Archived   | —     |
+
+---
+
+## 📡 Grafana Monitoring Dashboard
+
+Real-time API monitoring with **8 custom panels**.
+
+![Grafana Dashboard](images/grafana_dashborad.png)
+
+| Panel                  | Type        | Query                                          |
+| ---------------------- | ----------- | ---------------------------------------------- |
+| Total Predictions      | Stat        | `sum(sentiment_predictions_total)`             |
+| Model Confidence       | Gauge       | `model_confidence_score`                       |
+| Average Latency        | Time Series | `sentiment_prediction_latency_seconds`         |
+| Sentiment Distribution | Pie Chart   | `sentiment_predictions_total`                  |
+| Latency P95            | Time Series | `histogram_quantile(0.95, ...)`                |
+| Predictions Over Time  | Time Series | `increase(sentiment_predictions_total[5m])`    |
+| Request Rate           | Time Series | `rate(http_requests_total[5m])`                |
+| Error Rate             | Stat        | `rate(http_requests_total{status=~"5.."}[5m])` |
+
+### Import Dashboard
+
+```bash
+# 1. Open Grafana → Dashboards → Import
+# 2. Upload monitoring/grafana-dashboard.json
+# 3. Select Prometheus datasource → Import
 ```
 
 ---
 
-## 📦 Model Registry
+## 📈 Prometheus Targets
 
-The production model is registered and versioned in MLflow Model Registry.
+![Prometheus Targets](images/prometheusdashboard.jpeg)
 
-![Model Regiestered](images/model-regesterd.jpeg)
-
-| Model                   | Version | Stage         | CV F1 Macro |
-| ----------------------- | ------- | ------------- | ----------- |
-| amazon-sentiment-logreg | 2       | ✅ Production | 0.858       |
-| amazon-sentiment-logreg | 1       | 📦 Archived   | —           |
-
-> In a production cloud environment the API would load directly via
-> `models:/amazon-sentiment-logreg/Production` against a remote tracking server.
+- ✅ `sentiment-analysis-api` — **1/1 UP**
+- Scrape interval: every 15s
+- Last scrape duration: ~4ms
 
 ---
 
-## 📈 Visualizations
+## ☁️ AWS CloudWatch Monitoring
 
-### Confusion Matrix
+Infrastructure monitoring with custom **SentimentAnalysis** namespace.
 
-![Confusion Matrix](images/confusion_matrices.png)
+![CloudWatch Dashboard](images/cloudwatch.jpeg)
 
-### ROC Curve
+| Metric       | Value     | Interval  |
+| ------------ | --------- | --------- |
+| CPU Usage    | ~1.3%     | 60s       |
+| Memory Usage | ~53.9%    | 60s       |
+| Disk Usage   | ~47.3%    | 60s       |
+| Docker Logs  | Streaming | Real-time |
 
-![ROC Curve](images/roc_curves.png)
+### Alarms Configured
 
-### Class Distribution
+- 🔴 Memory > 80% → Alert
+- 🔴 CPU > 80% → Alert
 
-![Class Distribution](images/class_distribution.png)
+```bash
+# Setup CloudWatch agent
+bash monitoring/setup-cloudwatch.sh
+```
 
-### Cross-Validated Macro F1
+---
 
-![CV F1](images/cv_f1_comparison.png)
+## 🌐 FastAPI Documentation
+
+![FastAPI Docs](images/fastpi_docs.png)
+
+---
+
+## 📈 ML Visualizations
+
+| Confusion Matrix                                   | ROC Curve                           |
+| -------------------------------------------------- | ----------------------------------- |
+| ![Confusion Matrix](images/confusion_matrices.png) | ![ROC Curve](images/roc_curves.png) |
+
+| Class Distribution                                   | CV F1 Comparison                      |
+| ---------------------------------------------------- | ------------------------------------- |
+| ![Class Distribution](images/class_distribution.png) | ![CV F1](images/cv_f1_comparison.png) |
 
 ---
 
 ## 🛠️ Tech Stack
 
-| Category            | Tools                       |
-| ------------------- | --------------------------- |
-| Language            | Python 3.12                 |
-| ML                  | Scikit-learn, NumPy, Pandas |
-| NLP                 | NLTK, TextBlob              |
-| API                 | FastAPI, Uvicorn, Pydantic  |
-| Experiment Tracking | MLflow 3.1.1                |
-| Testing             | Pytest, pytest-cov          |
-| Containerization    | Docker                      |
-| CI/CD               | GitHub Actions              |
-| Visualization       | Matplotlib, Seaborn         |
+| Category                | Tools                               |
+| ----------------------- | ----------------------------------- |
+| **Language**            | Python 3.12                         |
+| **ML**                  | Scikit-learn, NumPy, Pandas         |
+| **NLP**                 | NLTK, TextBlob                      |
+| **API**                 | FastAPI, Uvicorn, Pydantic          |
+| **Experiment Tracking** | MLflow 3.1.1                        |
+| **Monitoring**          | Prometheus, Grafana, AWS CloudWatch |
+| **Containerization**    | Docker, Docker Compose              |
+| **Cloud**               | AWS EC2, S3, IAM, CloudWatch        |
+| **CI/CD**               | GitHub Actions                      |
+| **Testing**             | Pytest, pytest-cov (98% coverage)   |
+| **Visualization**       | Matplotlib, Seaborn                 |
 
 ---
 
@@ -211,104 +268,157 @@ The production model is registered and versioned in MLflow Model Registry.
 ```
 amazon-sentiment-analysis/
 │
-├── .github/
-│   └── workflows/
-│       └── ci.yml                    # GitHub Actions CI/CD
-│
-├── src/
-│   ├── preprocessing.py              # TextPreprocessor (sklearn-compatible)
-│   ├── model_loader.py               # Lazy model loading & inference
-│   └── train.py                      # Training pipeline — GridSearchCV + MLflow logging
+├── .github/workflows/
+│   └── ci.yml                       # GitHub Actions CI/CD
 │
 ├── api/
-│   ├── __init__.py
-│   ├── main.py                       # FastAPI application
-│   └── schemas.py                    # Pydantic request/response schemas
+│   ├── main.py                      # FastAPI app + Prometheus metrics
+│   └── schemas.py                   # Pydantic schemas
+│
+├── src/
+│   ├── preprocessing.py             # sklearn-compatible TextPreprocessor
+│   ├── model_loader.py              # Lazy model loading
+│   └── train.py                     # GridSearchCV + MLflow pipeline
+│
+├── monitoring/
+│   ├── prometheus.yml               # Scrape config
+│   ├── grafana-dashboard.json       # 8-panel dashboard (importable)
+│   ├── cloudwatch-config.json       # CloudWatch agent config
+│   ├── cloudwatch-dashboard.json    # CloudWatch dashboard
+│   └── setup-cloudwatch.sh         # One-command CloudWatch setup
 │
 ├── tests/
-│   ├── test_preprocessing.py         # 100% coverage
-│   ├── test_model.py                 # 92% coverage
+│   ├── test_preprocessing.py        # 100% coverage
+│   ├── test_model.py                # 92% coverage
 │   └── test_api.py
 │
-├── notebooks/
-│   └── amazon_sentiment_analysis.ipynb
-│
-├── mlruns/                           # MLflow experiment tracking (git-ignored)
-├── model/                            # Saved .pkl files (git-ignored)
-├── data/                             # Dataset CSV (git-ignored)
-├── images/                           # Visualizations
+├── images/                          # Screenshots & visualizations
+├── notebooks/                       # Jupyter analysis
+├── mlruns/                          # MLflow tracking (git-ignored)
+├── model/                           # .pkl files (git-ignored)
+├── data/                            # Dataset (git-ignored)
 │
 ├── Dockerfile
+├── docker-compose.yml
 ├── requirements.txt
 ├── pytest.ini
-├── .gitignore
 └── README.md
 ```
 
 ---
 
-## ▶️ How to Run
+## 🔐 Environment Variables
 
-### Option 1 — Local
+Create a `.env` file in the project root:
 
 ```bash
-# 1. Clone the repository
+cp .env.example .env
+```
+
+| Variable                 | Description             | Default                |
+| ------------------------ | ----------------------- | ---------------------- |
+| `GRAFANA_ADMIN`          | Grafana admin username  | `your_username`        |
+| `GRAFANA_ADMIN_PASSWORD` | Grafana admin password  | `your_secure_password` |
+| `PYTHONUNBUFFERED`       | Python output buffering | `1`                    |
+
+### `.env.example`
+
+```env
+# Grafana credentials
+GRAFANA_ADMIN=your_username
+GRAFANA_ADMIN_PASSWORD=your_secure_password
+
+# Python
+PYTHONUNBUFFERED=1
+```
+
+> ⚠️ Never commit `.env` to GitHub — it's already in `.gitignore`
+
+---
+
+## ▶️ How to Run
+
+### Option 1 — Local Development
+
+```bash
+# Clone
 git clone https://github.com/ozairshafique/amazon-sentiment-analysis.git
 cd amazon-sentiment-analysis
 
-# 2. Create and activate virtual environment
-python -m venv venv
-source venv/bin/activate        # Windows: venv\Scripts\activate
-
-# 3. Install dependencies
+# Setup environment
+python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
-
-# 4. Download NLTK data
 python -m nltk.downloader stopwords wordnet
 
-# 5. Download dataset from Kaggle and place at:
-#    data/amazon_reviews.csv
+# Place dataset at data/amazon_reviews.csv
 
-# 6. Train the model (auto-logs run to MLflow)
+# Train model
 python src/train.py
 
-# 7. (Optional) Inspect experiments
-mlflow ui                       # http://localhost:5000
+# View experiments
+mlflow ui   # → http://localhost:5000
 
-# 8. Start the API
-uvicorn api.main:app --reload   # http://localhost:8000
+# Start API
+uvicorn api.main:app --reload  # → http://localhost:8000
 ```
 
-### Option 2 — Docker
+### Option 2 — Docker Compose (Recommended)
 
 ```bash
-# Build image
-docker build -t amazon-sentiment-analysis .
+# Configure environment
+cp .env.example .env  # set GRAFANA_ADMIN and GRAFANA_ADMIN_PASSWORD
 
-# Run container
-docker run -p 8000:8000 amazon-sentiment-analysis
+# Start all services
+docker-compose up -d
+
+# Services running at:
+# FastAPI    → http://localhost:8000/docs
+# Prometheus → http://localhost:9090
+# Grafana    → http://localhost:3001
+```
+
+### Option 3 — AWS EC2 Deployment
+
+```bash
+# SSH into EC2
+ssh -i your-key.pem ubuntu@YOUR_EC2_IP
+
+# Clone & setup
+git clone https://github.com/ozairshafique/amazon-sentiment-analysis.git
+cd amazon-sentiment-analysis
+
+# Download model from S3
+aws s3 cp s3://your-bucket/logreg_model.pkl ./model/
+
+# Configure
+cp .env.example .env
+
+# Launch
+docker-compose up -d
+
+# Setup CloudWatch monitoring
+bash monitoring/setup-cloudwatch.sh
 ```
 
 ---
 
 ## 🌐 API Endpoints
 
-| Method | Endpoint         | Description                |
-| ------ | ---------------- | -------------------------- |
-| GET    | `/`              | API info                   |
-| GET    | `/health`        | Health check               |
-| POST   | `/predict`       | Single prediction          |
-| POST   | `/predict/batch` | Batch prediction (max 100) |
+| Method | Endpoint         | Description                 |
+| ------ | ---------------- | --------------------------- |
+| `GET`  | `/`              | API info                    |
+| `GET`  | `/health`        | Health check                |
+| `GET`  | `/metrics`       | Prometheus metrics          |
+| `POST` | `/predict`       | Single prediction           |
+| `POST` | `/predict/batch` | Batch predictions (max 100) |
 
-### Single Prediction Example
+### Single Prediction
 
 ```bash
-curl -X POST "http://localhost:8000/predict" \
-     -H "Content-Type: application/json" \
-     -d "{\"text\": \"This product is amazing!\", \"model_name\": \"logreg\"}"
+curl -X POST "http://63.180.13.157:8000/predict" \
+  -H "Content-Type: application/json" \
+  -d '{"text": "This product is amazing!", "model_name": "logreg"}'
 ```
-
-### Response
 
 ```json
 {
@@ -319,45 +429,30 @@ curl -X POST "http://localhost:8000/predict" \
 }
 ```
 
-### Batch Prediction Example
+### Batch Prediction
 
-```json
-[
-  { "text": "Amazing product!", "model_name": "logreg" },
-  { "text": "Terrible quality!", "model_name": "logreg" },
-  { "text": "Great value for money!", "model_name": "logreg" }
-]
+```bash
+curl -X POST "http://63.180.13.157:8000/predict/batch" \
+  -H "Content-Type: application/json" \
+  -d '[
+    {"text": "Amazing product!", "model_name": "logreg"},
+    {"text": "Terrible quality!", "model_name": "logreg"},
+    {"text": "Great value for money!", "model_name": "logreg"}
+  ]'
 ```
-
-### Batch Response
 
 ```json
 {
   "total": 3,
   "results": [
-    {
-      "text": "Amazing product!",
-      "model": "logreg",
-      "sentiment": "positive",
-      "confidence": 0.98
-    },
-    {
-      "text": "Terrible quality!",
-      "model": "logreg",
-      "sentiment": "negative",
-      "confidence": 0.75
-    },
-    {
-      "text": "Great value for money!",
-      "model": "logreg",
-      "sentiment": "positive",
-      "confidence": 0.99
-    }
+    { "sentiment": "positive", "confidence": 0.98 },
+    { "sentiment": "negative", "confidence": 0.75 },
+    { "sentiment": "positive", "confidence": 0.99 }
   ]
 }
 ```
 
-> 📖 Interactive API docs available at: `http://localhost:8000/docs`
+> 📖 Full interactive docs: **[http://63.180.13.157:8000/docs](http://63.180.13.157:8000/docs)**
 
 ---
 
@@ -367,95 +462,185 @@ curl -X POST "http://localhost:8000/predict" \
 # Run all tests
 pytest tests/ -v
 
-# Run with coverage
+# With coverage report
 pytest tests/ -v --cov=src --cov-report=term-missing
 ```
 
-### Coverage Report
-
-| File               | Coverage |
-| ------------------ | -------- |
-| `preprocessing.py` | 100% ✅  |
-| `model_loader.py`  | 83% ✅   |
-| `train.py`         | 99% ✅   |
-| **Total**          | **98%**  |
-
-> 20 tests covering preprocessing, model inference, and API endpoints.
+| Module             | Coverage   |
+| ------------------ | ---------- |
+| `preprocessing.py` | 100% ✅    |
+| `train.py`         | 99% ✅     |
+| `model_loader.py`  | 83% ✅     |
+| **Total**          | **98%** ✅ |
 
 ---
 
 ## ⚙️ CI/CD Pipeline
 
-Every push to `main` automatically triggers:
+Every push to `main` triggers:
 
-1. **Environment setup** — Python 3.12, install all dependencies
-2. **NLTK data** — download stopwords and WordNet
-3. **Training** — runs `src/train.py`, logs run to MLflow (`mlruns/`)
-4. **Testing** — 20+ pytest tests, enforces 97% coverage
-5. **Docker build** — builds and validates the container image
+```
+1. Environment Setup    → Python 3.12 + dependencies
+2. NLTK Download        → stopwords + wordnet
+3. Model Training       → src/train.py + MLflow logging
+4. Test Suite           → 20+ tests, 97% coverage enforced
+5. Docker Build         → image built & validated
+```
 
 ---
 
 ## 🔁 Reproducibility
 
-All experiments are fully reproducible:
+| Factor           | Value             |
+| ---------------- | ----------------- |
+| Random seed      | 42                |
+| Train/test split | 80/20 stratified  |
+| CV strategy      | 3-fold stratified |
+| CV scoring       | F1 macro          |
+| Tracking         | MLflow 3.1.1      |
 
-| Factor           | Value                    |
-| ---------------- | ------------------------ |
-| Random seed      | 42 (globally fixed)      |
-| Train/test split | 80/20, stratified        |
-| CV strategy      | 3-fold, stratified       |
-| CV scoring       | F1 macro                 |
-| Tracked by       | MLflow 3.1.1 (`mlruns/`) |
+---
+
+## 🔧 Troubleshooting
+
+### Docker Issues
+
+| Error                           | Cause                      | Fix                                              |
+| ------------------------------- | -------------------------- | ------------------------------------------------ |
+| `permission denied docker.sock` | User not in docker group   | `sudo usermod -aG docker $USER && newgrp docker` |
+| `ContainerConfig KeyError`      | Old docker-compose version | Upgrade to v2.24+                                |
+| `HTTP timeout`                  | Slow network / low memory  | `export COMPOSE_HTTP_TIMEOUT=300`                |
+| `port already in use`           | Port conflict              | `docker-compose down && docker-compose up -d`    |
+
+### AWS Issues
+
+| Error                    | Cause                        | Fix                                            |
+| ------------------------ | ---------------------------- | ---------------------------------------------- |
+| `Connection timed out`   | Security group blocking port | Add inbound rule for port 8000/3001/9090       |
+| `ERR_CONNECTION_REFUSED` | Container not running        | `docker-compose ps` and check logs             |
+| `Access Denied S3`       | IAM role missing             | Attach `AmazonS3ReadOnlyAccess` to EC2 role    |
+| Low memory warnings      | t3.micro too small           | Add 2GB swap: `sudo fallocate -l 2G /swapfile` |
+
+### Grafana Issues
+
+| Error               | Cause                    | Fix                                            |
+| ------------------- | ------------------------ | ---------------------------------------------- |
+| `Login failed`      | Wrong credentials        | Try `admin/admin` (default)                    |
+| `No data in panels` | Prometheus not connected | Check datasource URL: `http://prometheus:9090` |
+| `Plugin error`      | Datasource missing       | Add Prometheus datasource first                |
+
+### API Issues
+
+| Error                  | Cause                | Fix                                               |
+| ---------------------- | -------------------- | ------------------------------------------------- |
+| `Model not found`      | .pkl file missing    | `aws s3 cp s3://bucket/logreg_model.pkl ./model/` |
+| `500 Internal Error`   | Model loading failed | Check `docker-compose logs app`                   |
+| `422 Validation Error` | Wrong request format | Check API schema at `/docs`                       |
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Here's how:
 
 ```bash
-# Re-run training and compare with previous runs
-python src/train.py
-mlflow ui              # view all runs at localhost:5000
+# 1. Fork the repository
+# 2. Create your feature branch
+git checkout -b feature/amazing-feature
+
+# 3. Make your changes
+# 4. Run tests
+pytest tests/ -v --cov=src
+
+# 5. Commit your changes
+git commit -m "Add amazing feature"
+
+# 6. Push to branch
+git push origin feature/amazing-feature
+
+# 7. Open a Pull Request
 ```
+
+### Development Setup
+
+```bash
+# Install dev dependencies
+pip install -r requirements.txt
+
+# Run tests with coverage
+pytest tests/ -v --cov=src --cov-report=html
+
+# View coverage report
+open htmlcov/index.html
+```
+
+### Code Style
+
+- Follow PEP 8
+- Add docstrings to all functions
+- Write tests for new features
+- Keep test coverage above 95%
+
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
 
 ---
 
 ## 🧠 Key Learnings
 
-- Why accuracy is misleading with imbalanced datasets — and how F1 macro addresses it
-- How sklearn Pipelines prevent data leakage
-- Production model selection based on multiple criteria, not just a single metric
-- MLflow experiment tracking for reproducible, comparable model runs
-- FastAPI best practices for ML APIs
-- Docker containerization for ML applications
-- CI/CD automation with GitHub Actions
+- Class imbalance handling — why F1 macro beats accuracy
+- sklearn Pipeline design to prevent data leakage
+- Multi-criteria model selection for production
+- MLflow experiment tracking and model registry
+- Prometheus metric instrumentation in FastAPI
+- Docker Compose multi-service orchestration
+- AWS EC2 deployment, S3 storage, IAM roles
+- CloudWatch agent configuration and dashboards
+- GitHub Actions CI/CD for ML pipelines
 
 ---
 
 ## 🔮 Future Improvements
 
-- [ ] Fine-tune DistilBERT for contextual embeddings
-- [ ] Add LIME/SHAP for prediction explainability
-- [ ] Add Prometheus + Grafana for API monitoring
-- [ ] Implement data drift detection with Evidently AI
-- [ ] Collect more negative reviews to reduce 13.7:1 class imbalance
-- [ ] Deploy to Railway or Render
+- [x] ~~Prometheus + Grafana monitoring~~ ✅
+- [x] ~~AWS EC2 deployment~~ ✅
+- [x] ~~AWS CloudWatch monitoring~~ ✅
+- [x] ~~S3 model storage~~ ✅
+- [ ] Fine-tune DistilBERT for better accuracy
+- [ ] LIME/SHAP explainability
+- [ ] Kubernetes (EKS) deployment
+- [ ] Evidently AI data drift detection
+- [ ] Collect more negative reviews (balance dataset)
+
+---
+
+## ⚠️ Known Limitations
+
+The dataset has a **13.7:1 class imbalance** (93% positive, 7% negative). The model occasionally misclassifies borderline negative reviews as positive. This is why **F1 Macro (0.858)** is used instead of accuracy as the primary metric.
 
 ---
 
 ## 🏁 Conclusion
 
-This project demonstrates the complete MLOps lifecycle — from raw data to a production-ready, monitored, and reproducible system.
+A complete, production-grade MLOps pipeline demonstrating the full ML lifecycle:
 
-**Logistic Regression** was selected as the production model, achieving:
-
-- **CV Macro F1: 0.858**
-- **Test F1 Macro: 0.852**
-- **ROC-AUC: 0.967**
-
-The system includes MLflow experiment tracking, a FastAPI inference API, Docker containerization, 98% test coverage, and a fully automated GitHub Actions CI/CD pipeline.
+| Metric                  | Value     |
+| ----------------------- | --------- |
+| CV Macro F1             | **0.858** |
+| Test F1 Macro           | **0.852** |
+| ROC-AUC                 | **0.967** |
+| Model Confidence (live) | **86%**   |
+| Test Coverage           | **98%**   |
 
 ---
 
 ## 👤 Author
 
-**Uzair Shafique**
+**Uzair Shafique** — AI & MLOps Engineer
 
-- GitHub: [ozairshafique](https://github.com/ozairshafique)
-- Email: uzair_11@hotmail.com
+[![GitHub](https://img.shields.io/badge/GitHub-ozairshafique-181717?style=flat&logo=github)](https://github.com/ozairshafique)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-uzair--shafique-0A66C2?style=flat&logo=linkedin)](https://linkedin.com/in/uzair-shafique-97836810a)
+[![Email](https://img.shields.io/badge/Email-uzair__11%40hotmail.com-D14836?style=flat&logo=gmail)](mailto:uzair_11@hotmail.com)
