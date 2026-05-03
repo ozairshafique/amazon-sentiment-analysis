@@ -1,0 +1,94 @@
+{
+  "widgets": [
+    {
+      "type": "metric",
+      "x": 0,
+      "y": 0,
+      "width": 6,
+      "height": 6,
+      "properties": {
+        "view": "timeSeries",
+        "stacked": false,
+        "metrics": [
+          [
+            "SentimentAnalysis",
+            "cpu_usage_user",
+            "host",
+            "ip-172-31-45-28",
+            "cpu",
+            "cpu-total"
+          ]
+        ],
+        "region": "eu-central-1"
+      }
+    },
+    {
+      "type": "metric",
+      "x": 6,
+      "y": 0,
+      "width": 6,
+      "height": 5,
+      "properties": {
+        "sparkline": true,
+        "view": "singleValue",
+        "metrics": [
+          [
+            "SentimentAnalysis",
+            "disk_used_percent",
+            "path",
+            "/",
+            "host",
+            "ip-172-31-45-28",
+            "device",
+            "nvme0n1p1",
+            "fstype",
+            "ext4"
+          ]
+        ],
+        "region": "eu-central-1"
+      }
+    },
+    {
+      "type": "metric",
+      "x": 12,
+      "y": 0,
+      "width": 6,
+      "height": 6,
+      "properties": {
+        "sparkline": true,
+        "view": "singleValue",
+        "metrics": [
+          ["SentimentAnalysis", "mem_used_percent", "host", "ip-172-31-45-28"]
+        ],
+        "region": "eu-central-1"
+      }
+    },
+    {
+      "type": "metric",
+      "x": 18,
+      "y": 0,
+      "width": 6,
+      "height": 6,
+      "properties": {
+        "view": "timeSeries",
+        "stacked": false,
+        "metrics": [
+          [
+            "SentimentAnalysis",
+            "cpu_usage_system",
+            "host",
+            "ip-172-31-45-28",
+            "cpu",
+            "cpu-total"
+          ],
+          [".", "cpu_usage_user", ".", ".", ".", "."],
+          [".", "cpu_usage_idle", ".", ".", ".", "."]
+        ],
+        "region": "eu-central-1",
+        "legend": {
+          "position": "bottom"
+        }
+      }
+    }
+  ]
+}
