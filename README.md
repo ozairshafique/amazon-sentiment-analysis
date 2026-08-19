@@ -50,11 +50,11 @@
 
 ## 🔗 Live Demo
 
-| Service       | URL                                                              | Status                                                      |
-| ------------- | ---------------------------------------------------------------- | ----------------------------------------------------------- |
-| 🚀 FastAPI    | [http://63.180.13.157:8000/docs](http://63.180.13.157:8000/docs) | ![UP](https://img.shields.io/badge/status-live-brightgreen) |
-| 📊 Grafana    | [http://63.180.13.157:3001](http://63.180.13.157:3001)           | ![UP](https://img.shields.io/badge/status-live-brightgreen) |
-| 📈 Prometheus | [http://63.180.13.157:9090](http://63.180.13.157:9090)           | ![UP](https://img.shields.io/badge/status-live-brightgreen) |
+| Service       | URL                                                          | Status                                                      |
+| ------------- | ------------------------------------------------------------ | ----------------------------------------------------------- |
+| 🚀 FastAPI    | [http://63.181.6.23:8000/docs](http://63.181.6.23:8000/docs) | ![UP](https://img.shields.io/badge/status-live-brightgreen) |
+| 📊 Grafana    | [http://63.181.6.23:3001](http://63.181.6.23:3001)           | ![UP](https://img.shields.io/badge/status-live-brightgreen) |
+| 📈 Prometheus | [http://63.181.6.23:9090](http://63.181.6.23:9090)           | ![UP](https://img.shields.io/badge/status-live-brightgreen) |
 
 ---
 
