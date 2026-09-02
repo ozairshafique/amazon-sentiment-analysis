@@ -415,7 +415,7 @@ bash monitoring/setup-cloudwatch.sh
 ### Single Prediction
 
 ```bash
-curl -X POST "http://63.180.13.157:8000/predict" \
+curl -X POST "http://63.181.6.23:8000/predict" \
   -H "Content-Type: application/json" \
   -d '{"text": "This product is amazing!", "model_name": "logreg"}'
 ```
@@ -432,7 +432,7 @@ curl -X POST "http://63.180.13.157:8000/predict" \
 ### Batch Prediction
 
 ```bash
-curl -X POST "http://63.180.13.157:8000/predict/batch" \
+curl -X POST "http://63.181.6.23:8000/predict/batch" \
   -H "Content-Type: application/json" \
   -d '[
     {"text": "Amazing product!", "model_name": "logreg"},
@@ -452,7 +452,7 @@ curl -X POST "http://63.180.13.157:8000/predict/batch" \
 }
 ```
 
-> 📖 Full interactive docs: **[http://63.180.13.157:8000/docs](http://63.180.13.157:8000/docs)**
+> 📖 Full interactive docs: **[http://63.181.6.23:8000/docs](http://63.181.6.23:8000/docs)**
 
 ---
 
