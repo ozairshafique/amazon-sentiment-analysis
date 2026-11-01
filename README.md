@@ -17,7 +17,7 @@
 
 ## 📋 Table of Contents
 
-- [Live Demo](#-live-demo)
+- [Deployment Status](#-deployment-status)
 - [Overview](#-overview)
 - [Problem Statement](#-problem-statement)
 - [Dataset](#-dataset)
@@ -29,6 +29,7 @@
 - [CloudWatch Monitoring](#-cloudwatch-monitoring)
 - [FastAPI Documentation](#-fastapi-documentation)
 - [ML Visualizations](#-ml-visualizations)
+- [Explainability (SHAP)](#-explainability-shap)
 - [Tech Stack](#️-tech-stack)
 - [Project Structure](#-project-structure)
 - [Environment Variables](#-environment-variables)
@@ -48,13 +49,15 @@
 
 ---
 
-## 🔗 Live Demo
+## 🔗 Deployment Status
 
-| Service       | URL                                                          | Status                                                      |
-| ------------- | ------------------------------------------------------------ | ----------------------------------------------------------- |
-| 🚀 FastAPI    | [http://63.181.6.23:8000/docs](http://63.181.6.23:8000/docs) | ![UP](https://img.shields.io/badge/status-live-brightgreen) |
-| 📊 Grafana    | [http://63.181.6.23:3001](http://63.181.6.23:3001)           | ![UP](https://img.shields.io/badge/status-live-brightgreen) |
-| 📈 Prometheus | [http://63.181.6.23:9090](http://63.181.6.23:9090)           | ![UP](https://img.shields.io/badge/status-live-brightgreen) |
+The full stack (FastAPI + Prometheus + Grafana, with CloudWatch agent and S3 model storage) was **deployed and running on AWS EC2** from 2026 until the AWS free plan ended in **November 2026**. To keep running costs at zero, the EC2 instance was then shut down. The screenshots below (FastAPI docs, Grafana, Prometheus, CloudWatch) were taken from the live AWS deployment.
+
+Everything is containerised with Docker Compose, so the stack can be redeployed on AWS (see [Option 3 — AWS EC2 Deployment](#️-how-to-run)) or run locally with a single command:
+
+```bash
+docker-compose up -d   # FastAPI → :8000/docs · Grafana → :3001 · Prometheus → :9090
+```
 
 ---
 
@@ -113,25 +116,29 @@ Amazon product reviews contain rich customer sentiment but are impossible to ana
 
 ### Performance Comparison
 
-| Metric           | Logistic Regression | LinearSVC |   SVC | Random Forest |
-| ---------------- | ------------------: | --------: | ----: | ------------: |
-| CV Macro F1      |           **0.858** |     0.850 | 0.840 |         0.512 |
-| Test F1 Macro    |           **0.852** |     0.835 |     — |             — |
-| Test F1 Positive |           **0.980** |     0.975 |     — |             — |
-| Test F1 Negative |           **0.724** |     0.694 |     — |             — |
-| ROC-AUC          |               0.967 | **0.968** | 0.968 |         0.961 |
-| Selected         |          ✅ **Yes** |        ❌ |    ❌ |            ❌ |
+| Metric           | Logistic Regression | LinearSVC |     SVC | Random Forest |
+| ---------------- | ------------------: | --------: | ------: | ------------: |
+| CV Macro F1      |           **0.858** |     0.850 | 0.832\* |       0.501\* |
+| Test F1 Macro    |           **0.852** |     0.835 |       — |             — |
+| Test F1 Positive |           **0.980** |     0.975 |       — |             — |
+| Test F1 Negative |           **0.724** |     0.694 |       — |             — |
+| ROC-AUC          |               0.967 | **0.968** |   0.968 |         0.961 |
+| Selected         |          ✅ **Yes** |        ❌ |      ❌ |            ❌ |
+
+\* SVC and Random Forest are compared in the notebook only (default hyperparameters, 5-fold CV on the training split); Logistic Regression and LinearSVC CV scores come from `src/train.py` (GridSearchCV over `C`, 3-fold CV on the training split).
 
 ### Why Logistic Regression?
 
 | Criterion         | LogReg    | LinearSVC  | SVC        | Random Forest |
 | ----------------- | --------- | ---------- | ---------- | ------------- |
-| Best CV F1        | ✅        | ✅ Similar | ✅ Similar | ❌            |
+| CV F1             | ✅ Top    | ✅ Similar | ✅ Similar | ❌ Lowest     |
 | `predict_proba()` | ✅ Native | ❌ Wrapper | ⚠️ Slow    | ✅            |
 | Inference Speed   | ✅ Fast   | ✅ Fast    | ❌ Slow    | ❌ Slow       |
 | Production Ready  | ✅        | ❌         | ❌         | ❌            |
 
 > ⚠️ **Note:** Accuracy is misleading with 13.7:1 class imbalance. **F1 Macro** is the primary metric.
+
+> ℹ️ Logistic Regression and LinearSVC results come from the production training script `src/train.py` (GridSearchCV over `C`, 3-fold stratified CV on the training split, logged to MLflow). The exploration notebook compares the same four models with default hyperparameters and 5-fold CV on the training split, so its CV scores are slightly lower (Logistic Regression 0.836 ± 0.025, LinearSVC 0.838 ± 0.019): the top linear models are within one standard deviation of each other.
 
 ---
 
@@ -245,12 +252,30 @@ bash monitoring/setup-cloudwatch.sh
 
 ---
 
+## 🔍 Explainability (SHAP)
+
+Metrics show **how well** the model works; SHAP shows **why** it makes each prediction. Because the production model is Logistic Regression, `shap.LinearExplainer` computes **exact** SHAP values quickly, on unseen test reviews (see section 8.1 of the notebook).
+
+![SHAP summary plot](images/shap_summary_plot.png)
+
+| Most influential words                             | Why one review was classified as negative                |
+| -------------------------------------------------- | -------------------------------------------------------- |
+| ![SHAP top features](images/shap_top_features.png) | ![SHAP single review](images/shap_waterfall_example.png) |
+
+- **Global:** which words and phrases push predictions towards positive or negative across all test reviews (summary plot above: red = word present, right = pushes towards positive).
+- **Local:** a waterfall plot explaining one individual prediction, word by word.
+- **What it found:** complaint words such as _month_, _format_ and _data_ push towards negative; _great_, _work_ and _fast_ towards positive. It also revealed a possible dataset bias: the brand name _sandisk_ pushes towards negative.
+- **Why it matters:** it confirms the model learned sensible signals, helps spot spurious ones, and lets non-technical stakeholders understand its decisions.
+
+---
+
 ## 🛠️ Tech Stack
 
 | Category                | Tools                               |
 | ----------------------- | ----------------------------------- |
 | **Language**            | Python 3.12                         |
 | **ML**                  | Scikit-learn, NumPy, Pandas         |
+| **Explainability**      | SHAP (LinearExplainer)              |
 | **NLP**                 | NLTK, TextBlob                      |
 | **API**                 | FastAPI, Uvicorn, Pydantic          |
 | **Experiment Tracking** | MLflow 3.1.1                        |
@@ -415,7 +440,7 @@ bash monitoring/setup-cloudwatch.sh
 ### Single Prediction
 
 ```bash
-curl -X POST "http://63.181.6.23:8000/predict" \
+curl -X POST "http://localhost:8000/predict" \
   -H "Content-Type: application/json" \
   -d '{"text": "This product is amazing!", "model_name": "logreg"}'
 ```
@@ -432,7 +457,7 @@ curl -X POST "http://63.181.6.23:8000/predict" \
 ### Batch Prediction
 
 ```bash
-curl -X POST "http://63.181.6.23:8000/predict/batch" \
+curl -X POST "http://localhost:8000/predict/batch" \
   -H "Content-Type: application/json" \
   -d '[
     {"text": "Amazing product!", "model_name": "logreg"},
@@ -452,7 +477,7 @@ curl -X POST "http://63.181.6.23:8000/predict/batch" \
 }
 ```
 
-> 📖 Full interactive docs: **[http://63.181.6.23:8000/docs](http://63.181.6.23:8000/docs)**
+> 📖 Full interactive docs: **http://localhost:8000/docs** (when running locally or on EC2)
 
 ---
 
@@ -594,6 +619,7 @@ This project is licensed under the **MIT License** — see the [LICENSE](LICENSE
 - Class imbalance handling — why F1 macro beats accuracy
 - sklearn Pipeline design to prevent data leakage
 - Multi-criteria model selection for production
+- Model explainability with SHAP (global and local explanations)
 - MLflow experiment tracking and model registry
 - Prometheus metric instrumentation in FastAPI
 - Docker Compose multi-service orchestration
@@ -609,8 +635,9 @@ This project is licensed under the **MIT License** — see the [LICENSE](LICENSE
 - [x] ~~AWS EC2 deployment~~ ✅
 - [x] ~~AWS CloudWatch monitoring~~ ✅
 - [x] ~~S3 model storage~~ ✅
+- [x] ~~SHAP explainability~~ ✅
+- [ ] `/explain` API endpoint returning the top words behind each prediction
 - [ ] Fine-tune DistilBERT for better accuracy
-- [ ] LIME/SHAP explainability
 - [ ] Kubernetes (EKS) deployment
 - [ ] Evidently AI data drift detection
 - [ ] Collect more negative reviews (balance dataset)
@@ -643,4 +670,4 @@ A complete, production-grade MLOps pipeline demonstrating the full ML lifecycle:
 
 [![GitHub](https://img.shields.io/badge/GitHub-ozairshafique-181717?style=flat&logo=github)](https://github.com/ozairshafique)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-uzair--shafique-0A66C2?style=flat&logo=linkedin)](https://linkedin.com/in/uzair-shafique-97836810a)
-[![Email](https://img.shields.io/badge/Email-uzair__11%40hotmail.com-D14836?style=flat&logo=gmail)](mailto:uzair_11@hotmail.com)
+[![Email](https://img.shields.io/badge/Email-uzairi__11%40hotmail.com-D14836?style=flat&logo=gmail)](mailto:uzairi_11@hotmail.com)
